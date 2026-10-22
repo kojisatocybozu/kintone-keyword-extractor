@@ -1,0 +1,23 @@
+{
+  "name": "kintone-keyword-extractor",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.32.1",
+  "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.1154.0",
+    "axios": "^1.20.0",
+    "mammoth": "^1.13.0",
+    "pdf-parse": "^1.1.1",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  }
+}

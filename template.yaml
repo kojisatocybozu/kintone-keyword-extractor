@@ -1,0 +1,40 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Description: Kintone attachment keyword extractor
+
+Parameters:
+  KintoneBaseUrl:
+    Type: String
+    Description: Kintone base URL without /k/
+
+  KintoneApiToken:
+    Type: String
+    NoEcho: true
+    Description: API token for kintone app 936
+
+  BedrockModelId:
+    Type: String
+    Default: amazon.nova-lite-v1:0
+
+Resources:
+  KeywordExtractorFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: ks-kintone-keyword-extractor
+      CodeUri: dist/
+      Handler: index.handler
+      Runtime: nodejs22.x
+      Timeout: 120
+      MemorySize: 1024
+      Environment:
+        Variables:
+          KINTONE_BASE_URL: !Ref KintoneBaseUrl
+          KINTONE_API_TOKEN: !Ref KintoneApiToken
+          BEDROCK_MODEL_ID: !Ref BedrockModelId
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - bedrock:InvokeModel
+              Resource: '*'
