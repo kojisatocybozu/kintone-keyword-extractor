@@ -8,7 +8,7 @@ await build({
   outfile: "dist/index.js",
   bundle: true,
   platform: "node",
-  target: "node22",
+  target: "node24",
   format: "cjs"
 });
 

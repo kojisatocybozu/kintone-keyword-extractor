@@ -1,9 +1,10 @@
 /* 
-
+ kintone-keyword-extractor
 */
 
 const axios = require("axios");
-const pdfParse = require("pdf-parse/lib/pdf-parse.js");
+const pdfParse = require("pdf-parse/lib/pdf-parse.js") 
+
 const mammoth = require("mammoth");
 const XLSX = require("xlsx");
 
@@ -58,7 +59,7 @@ async function extractText(file) {
 
   if (name.endsWith(".pdf")) {
     const result = await pdfParse(buffer);
-    return result.text;
+    return result.text;  
   }
 
   if (name.endsWith(".docx")) {
@@ -110,13 +111,16 @@ ${instruction}
 - Markdownのコードブロックや説明文を付けないこと
 - keywordsは文字列の配列とすること
 - questionsは想定される質問の文字列配列とすること
-- summaryは文書の簡潔な要約とすること
+- キーワードは最大20個
+- 検索に有効な重要キーワードを優先
+- 質問文ではなく、短い名詞句を基本とする
+- 重複するキーワードを出力しない
+- 指定されたJSON形式だけを返す
 
 出力形式:
 {
   "keywords": ["キーワード1", "キーワード2"],
-  "questions": ["想定される質問1", "想定される質問2"],
-  "summary": "文書の要約"
+  "questions": ["想定される質問1", "想定される質問2"]
 }
 
 【分析対象の文書】
@@ -139,6 +143,12 @@ ${documentText.slice(0, 40000)}
     })
   );
 
+  console.log("Bedrock stopReason:", response.stopReason);
+  console.log(
+    "Bedrock output token count:",
+    response.usage?.outputTokens
+  );
+
   const output = response.output?.message?.content
     ?.map(item => item.text || "")
     .join("");
@@ -147,12 +157,32 @@ ${documentText.slice(0, 40000)}
     throw new Error("Bedrockから空の応答が返されました");
   }
 
+
   const jsonText = output
     .replace(/^```(?:json)?\s*/i, "")
     .replace(/\s*```$/, "")
     .trim();
 
-  const result = JSON.parse(jsonText);
+  let result;
+
+  try {
+    result = JSON.parse(jsonText);
+  } catch (error) {
+    const position = Number(
+      error.message.match(/position\s+(\d+)/)?.[1] ?? 0
+    );
+
+    console.error("JSON parse error:", error.message);
+    console.error(
+      "問題箇所の前後:",
+      jsonText.slice(
+        Math.max(0, position - 200),
+        Math.min(jsonText.length, position + 200)
+      )
+    );
+
+    throw error;
+  }
 
   if (
     !Array.isArray(result.keywords) ||
@@ -246,10 +276,7 @@ exports.handler = async (event) => {
       ...result.keywords,
       "",
       "【想定質問】",
-      ...(result.questions || []),
-      "",
-      "【文書要約】",
-      result.summary || ""
+      ...(result.questions || [])
     ].join("\n");
 
     // 結果と処理状態を一括更新

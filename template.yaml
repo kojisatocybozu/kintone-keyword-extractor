@@ -24,7 +24,7 @@ Resources:
       FunctionName: ks-kintone-keyword-extractor
       CodeUri: dist/
       Handler: index.handler
-      Runtime: nodejs22.x
+      Runtime: nodejs24.x
       Timeout: 120
       MemorySize: 1024
       Environment:
