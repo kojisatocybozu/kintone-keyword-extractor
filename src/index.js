@@ -143,11 +143,12 @@ ${documentText.slice(0, 40000)}
     })
   );
 
-  console.log("Bedrock stopReason:", response.stopReason);
-  console.log(
-    "Bedrock output token count:",
-    response.usage?.outputTokens
-  );
+  console.log("[BEDROCK_USAGE]", JSON.stringify({
+    inputTokens: response.usage?.inputTokens,
+    outputTokens: response.usage?.outputTokens,
+    totalTokens: response.usage?.totalTokens,
+    stopReason: response.stopReason
+  }));
 
   const output = response.output?.message?.content
     ?.map(item => item.text || "")
@@ -243,6 +244,20 @@ exports.handler = async (event) => {
     const files = record[FILE_FIELD]?.value || [];
     const customPrompt = record[PROMPT_FIELD]?.value || "";
 
+    const promptSource = customPrompt.trim()
+      ? "kintone.KeywordExtractionPrompt"
+      : "hardcoded.DEFAULT_PROMPT";
+
+    const effectivePrompt = customPrompt.trim()
+      ? customPrompt.trim()
+      : DEFAULT_PROMPT.trim();
+
+    console.log(
+      `[PROMPT_SOURCE] recordId=${recordId} ` +
+      `source=${promptSource} ` +
+      `chars=${effectivePrompt.length}`
+    );
+
     if (files.length === 0) {
       throw new Error("添付ファイルがありません");
     }
@@ -268,7 +283,7 @@ exports.handler = async (event) => {
     // レコードに設定されたプロンプトを使用
     const result = await generateKeywords(
       documentText,
-      customPrompt
+      effectivePrompt
     );
 
     const keywordText = [
